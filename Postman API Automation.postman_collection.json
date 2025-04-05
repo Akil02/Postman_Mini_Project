@@ -1,0 +1,323 @@
+{
+	"info": {
+		"_postman_id": "75c2d298-5f33-4aa9-ac30-bf8aac34d881",
+		"name": "Postman API Automation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "GetToken",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body as JSON\r",
+									"let response = pm.response.json();\r",
+									"\r",
+									"// Extract accessToken\r",
+									"let accessToken = response.accessToken;\r",
+									"\r",
+									"// Store in Collection Variable\r",
+									"pm.environment.set(\"accessToken\", accessToken);\r",
+									"\r",
+									"// Log for debugging\r",
+									"console.log(\"Stored accessToken:\", accessToken);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Fetch stored username and password\r",
+									"let username = pm.variables.get(\"username\");\r",
+									"let password = pm.variables.get(\"password\");\r",
+									"\r",
+									"// Assertions to check if values are correctly set\r",
+									"pm.test(\"Username is set correctly\", function () {\r",
+									"    pm.expect(username).to.not.be.undefined;\r",
+									"    pm.expect(username).to.be.a(\"string\").and.not.be.empty;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Password is set correctly\", function () {\r",
+									"    pm.expect(password).to.not.be.undefined;\r",
+									"    pm.expect(password).to.be.a(\"string\").and.not.be.empty;\r",
+									"});\r",
+									"\r",
+									"// Log for debugging\r",
+									"console.log(\"Username:\", username);\r",
+									"console.log(\"Password:\", password);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}{{LoginURL}}",
+							"host": [
+								"{{BaseURL}}{{LoginURL}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Add New Product",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a random number between 1000 and 9999\r",
+									"const randomNum = Math.floor(10 + Math.random() * 9000);\r",
+									"\r",
+									"const finalValue = 'Testing'+{randomNum};\r",
+									"\r",
+									"// Save to environment variable\r",
+									"pm.variables.set(\"randomProduct\", finalValue);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the JSON response\r",
+									"let response = pm.response.json();\r",
+									"\r",
+									"// Check if 'id' exists and is not null\r",
+									"if (response.id !== null && response.id !== undefined) {\r",
+									"    // Store in collection variable\r",
+									"    pm.environment.set(\"savedId\", response.id);\r",
+									"    pm.environment.set(\"firstRequestStatus\", 'success');\r",
+									"    console.log(\"ID saved to collection variable:\", response.id);\r",
+									"} else {\r",
+									"    console.warn(\"ID is null or undefined – not saving.\");\r",
+									"    pm.environment.set(\"firstRequestStatus\", 'Fail');\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"{randomProduct}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}{{AddProduct}}",
+							"host": [
+								"{{BaseURL}}{{AddProduct}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Added Product",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let status = pm.environment.get(\"firstRequestStatus\");\r",
+									"\r",
+									"if (status !== \"success\") {\r",
+									"    // Stop further execution (e.g., prevent request or show a message)\r",
+									"    console.warn(\"Skipping request: First request did not return 200 OK.\");\r",
+									"    postman.setNextRequest(null);  // Skip remaining requests (if in a collection runner)\r",
+									"    throw new Error(\"Previous request failed – aborting.\");\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is exactly 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(201);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BaseURL}}{{GetProduct}}{{savedId}}",
+							"host": [
+								"{{BaseURL}}{{GetProduct}}{{savedId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "DeleteData",
+			"item": [
+				{
+					"name": "RemoveAllData",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let varsToDelete = [\"accessToken\", \"username\", \"password\",\"savedId\",\"firstRequestStatus\"];\r",
+									"\r",
+									"// Loop through and unset each\r",
+									"varsToDelete.forEach(function (key) {\r",
+									"    pm.environment.unset(key);\r",
+									"    console.log(`Deleted variable: ${key}`);\r",
+									"});  "
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Prevent sending the actual request\r",
+									"postman.setNextRequest(null);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://example.com/clean",
+							"protocol": "https",
+							"host": [
+								"example",
+								"com"
+							],
+							"path": [
+								"clean"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Access data for the current iteration",
+					"let username = pm.iterationData.get(\"Username\");",
+					"let password = pm.iterationData.get(\"Password\");",
+					"",
+					"// Debug",
+					"console.log(\"Username:\", username);",
+					"console.log(\"Password:\", password);",
+					"",
+					"// Validation",
+					"if (!username || !password) {",
+					"    throw new Error(\"Username or Password is missing in the current iteration.\");",
+					"}",
+					"",
+					"// Use the data",
+					"let user = {",
+					"    username: username,",
+					"    password: password",
+					"};",
+					"",
+					"console.log(\"User object:\", user);",
+					"pm.environment.set(\"username\", user.username);",
+					"pm.environment.set(\"password\", user.password);",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BaseURL",
+			"value": "https://dummyjson.com",
+			"type": "default"
+		},
+		{
+			"key": "LoginURL",
+			"value": "/auth/login",
+			"type": "default"
+		},
+		{
+			"key": "AddProduct",
+			"value": "/products/add",
+			"type": "default"
+		},
+		{
+			"key": "UpdateProduct",
+			"value": "/products/",
+			"type": "default"
+		},
+		{
+			"key": "DeleteProduct",
+			"value": "/products/",
+			"type": "default"
+		},
+		{
+			"key": "GetProduct",
+			"value": "/products/",
+			"type": "default"
+		}
+	]
+}
