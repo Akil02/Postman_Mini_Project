@@ -21,12 +21,12 @@ jobs:
       - name: Install Newman and HTML Reporter
         run: |
           npm install -g newman
-          npm install -g newman-reporter-html --location=global
-          echo "NODE_PATH=$(npm root -g)" >> $env:GITHUB_ENV
+          npm install -g newman-reporter-html
+          echo "NODE_PATH=$(npm root -g)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run Postman Collection
         run: |
-          newman run "Postman API Automation.postman_collection.json" `
+          npx newman run "Postman API Automation.postman_collection.json" `
             -d "User.csv" `
             --reporters cli,html `
             --reporter-html-export "report.html"
